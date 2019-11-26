@@ -1,0 +1,67 @@
+c
+program qg1l_dp
+c
+c -------------------------------
+c  Public distribution copy of quasigeostrophic model code used for the calculations described by:
+c
+c       Samelson, R. M., D. B. Chelton, and M. G. Schlax, 2019.  The ocean mesoscale regime
+c         of the reduced-gravity quasi-geostrophic model.  J. Phys. Oceanogr., 49, 2469–2498,
+c         DOI: 10.1175/JPO-D-18-0260.1.
+c
+c  Copyright 2019 Roger M. Samelson
+c
+c Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+c  and associated documentation files (the "Software"), to deal in the Software without restriction,
+c  including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+c  and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+c  subject to the following conditions:
+c
+c The above copyright notice and this permission notice shall be included in all copies or substantial
+c  portions of the Software.
+c
+c THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+c  LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+c  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+c  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+c  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+c ----------------------
+c
+c     This code uses the fft99f.f two-dimensional Fast Fourier Transform routine.  The version
+c      that has been used for the published calculations with this code was obtained from
+c      dsl@ncar.ucar.edu on Monday 9 September 1991 and contains the following history comments:
+C      PACKAGE FFT99F HISTORY:
+C              THE PACKAGE WAS WRITTEN BY CLIVE TEMPERTON AT ECMWF IN
+C              NOVEMBER, 1978.  IT WAS MODIFIED, DOCUMENTED, AND TESTED
+C              FOR NCAR BY RUSS REW IN SEPTEMBER, 1980.
+c
+c -------------------------------
+c
+c   Code history
+c
+c    Recent modifications for calculations described in Samelson et al. (2019)
+c
+c     RMS Dec 2017:  convert to doubly periodic from qg1lc_rf.f
+c
+c     RMS Oct 2017:  add random forcing
+c                    convert to 1-layer model from qg2lc_rf.f
+c
+c    Original source and previous modifications
+c
+c     The two-layer quasi-geostrophic model code that is the original source for this code
+c      was written by R. M. Samelson to perform the calculations described by:
+c       Samelson, R. M., and J. Pedlosky, 1990. Local baroclinic instability of flow over
+c         variable topography. Journal of Fluid Mechanics, 221, 411-436.
+c       Oh, S. P., J. Pedlosky, and R. M. Samelson, 1993. Linear and finite-amplitude localized
+c         baroclinic instability. Journal of the Atmospheric Sciences, 50(16), 2772-2784.
+c
+c     This version has been modified by Karl Helfrich from
+c     the original code written by Roger Samelson.
+c     KRH 10/92
+c
+c	  The Roberts scheme for controlling the saw-tooth
+c	  computational instability has been added.
+c	  KRH 11-12-92
+c
+c     This version has friction in the from of
+c     a hyperviscosity = -r del^6 psi_n
+c     KRH 12-23-93
