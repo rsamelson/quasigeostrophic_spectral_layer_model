@@ -195,8 +195,8 @@ c      if(io.eq.1.and.((j1/np)*np).eq.j1)call out(N+2,M+2,a0,p1,20)
 c      if(io.eq.1.and.((j1/np)*np).eq.j1)call out(N+2,M+2,force_a,p1,21)
 500   continue
 c
-      close(20)
-      close(21)
+c      close(20)
+c      close(21)
       close(22)
       stop
       end
@@ -582,6 +582,8 @@ c      Mout=min(M,22)
         write(iun,'(1x,i5,20(1x,e10.4))') k,(p1(k,l),l=la,lb)
        enddo
 40    continue 
+
+      write(6,*) p1(N,M)
       return
       end
 
@@ -735,8 +737,8 @@ c Predictor and corrector steps completed. Now average results:
       enddo
       return
       end
-!^M
-! ----------------------------------------------------------------^M
+!
+! ----------------------------------------------------------------
 
 
       subroutine out_nc(ncid,nrec,nn,mm,psi_varid,Fcap0_varid
@@ -769,6 +771,10 @@ C   Output is 3D data: an MxN lat-lon grid, for one timestep
 C   The start and count arrays will tell the netCDF library where to
 C   write our data.
       integer start(NDIMS), count(NDIMS)
+c   Need internal array dimension to match netCDF file record dimension
+      common /dumjac/ p1_nc(NLONS,NLATS)
+     .,               dumj(4*(2*N+2)*(2*M+2)-NLONS*NLATS)
+      real p1_nc,dumj
 
 C   Error handling.
       integer retval
@@ -776,7 +782,6 @@ C   Error handling.
 c -----------
       retval = nf_open(FILE_NAME, nf_write, ncid)
       if (retval .ne. nf_noerr) call handle_err(retval)
-
 
 C   These settings tell netcdf to write one timestep of data. (The
 C   setting of start(3) inside the loop below tells netCDF which
@@ -808,8 +813,15 @@ c
       call set99(trigs,ifax,2*N)
       call set99(trigs2,ifax2,2*M)
 c
-      retval = nf_put_vara_real(ncid, psi_varid, start, count, p1)
+      do l=1,M
+       do k=1,N
+        p1_nc(k,l)=p1(k,l)
+       enddo
+      enddo
+
+      retval = nf_put_vara_real(ncid, psi_varid, start, count, p1_nc)
       if (retval .ne. nf_noerr) call handle_err(retval)
+
 c
       do l=1,M+2
        do k=1,N+2
@@ -828,7 +840,13 @@ c
       call set99(trigs,ifax,2*N)
       call set99(trigs2,ifax2,2*M)
 c
-      retval = nf_put_vara_real(ncid, Fcap0_varid, start, count, p1)
+      do l=1,M
+       do k=1,N
+        p1_nc(k,l)=p1(k,l)
+       enddo
+      enddo
+
+      retval = nf_put_vara_real(ncid, Fcap0_varid, start, count, p1_nc)
       if (retval .ne. nf_noerr) call handle_err(retval)
 
 C   Close the file. This causes netCDF to flush all buffers and make
@@ -886,6 +904,10 @@ C   These program variables hold the latitudes and longitudes.
       real lats(NLATS), lons(NLONS)
       integer lon_varid, lat_varid
       real twopi
+c   Need internal array dimension to match netCDF file record dimension
+      common /dumjac/ p1_nc(NLONS,NLATS)
+     .,               dumj(4*(2*N+2)*(2*M+2)-NLONS*NLATS)
+      real p1_nc,dumj
 
 C   Create netCDF variables for stream function psi and
 C   forcing Fcap0 fields.
@@ -1198,11 +1220,15 @@ c
       call set99(trigs,ifax,2*N)
       call set99(trigs2,ifax2,2*M)
 c
-      do rec = 1, NRECS
-         start(3) = rec
-         retval = nf_put_vara_real(ncid, psi_varid, start, count, p1)
-         if (retval .ne. nf_noerr) call handle_err(retval)
-      end do
+      do l=1,M
+       do k=1,N
+        p1_nc(k,l)=p1(k,l)
+       enddo
+      enddo
+
+      start(3) = 1
+      retval = nf_put_vara_real(ncid, psi_varid, start, count, p1_nc)
+      if (retval .ne. nf_noerr) call handle_err(retval)
 c
       do l=1,M+2
        do k=1,N+2
@@ -1221,11 +1247,15 @@ c
       call set99(trigs,ifax,2*N)
       call set99(trigs2,ifax2,2*M)
 c
-      do rec = 1, NRECS
-         start(3) = rec
-         retval = nf_put_vara_real(ncid, Fcap0_varid, start, count, p1)
-         if (retval .ne. nf_noerr) call handle_err(retval)
-      end do
+      do l=1,M
+       do k=1,N
+        p1_nc(k,l)=p1(k,l)
+       enddo
+      enddo
+
+      start(3) = 1
+      retval = nf_put_vara_real(ncid, Fcap0_varid, start, count, p1_nc)
+      if (retval .ne. nf_noerr) call handle_err(retval)
 
 C   Close the file. This causes netCDF to flush all buffers and make
 C   sure your data are really written to disk.
