@@ -100,6 +100,8 @@ c --
 c      j2m=int(1.0/dt+0.05)
       j2m=int(0.5/dt+0.05)
 c      j2m=1
+c  output file record time step
+      dt_out=j2m*np*dt
 c
 c  beta parameter
       bb=0.616
@@ -156,7 +158,7 @@ c
 c  initialize netcdf file and write initial data
       call out_nc_init(ncid
      .,  bb,f1,xk,xl,dt,ifrict,rpsi,rek,r0_del6,r,tau,f_amp
-     .,  dxkf,xkf,c0_rf,ndt,dtn,rcap
+     .,  dxkf,xkf,c0_rf,ndt,dtn,rcap,dt_out
      .,  N+2,M+2,psi_varid,Fcap0_varid,a0,force_a,p1)
 c   netcdf file output record counter
       nrec=1
@@ -864,7 +866,7 @@ C   sure your data are really written to disk.
 
       subroutine out_nc_init(ncid
      .,  bb,f1,xk,xl,dt,ifrict,rpsi,rek,r0_del6,r,tau,f_amp
-     .,  dxkf,xkf,c0_rf,ndt,dtn,rcap
+     .,  dxkf,xkf,c0_rf,ndt,dtn,rcap,dt_out
      .,  nn,mm,psi_varid,Fcap0_varid,a0,force_a,p1)
       implicit none
 c   QG spectral model dimensions
@@ -918,26 +920,25 @@ C   forcing Fcap0 fields.
       integer dimids(NDIMS)
 c   QG spectral model parameters
       real bb,f1,xk,xl,dt,rpsi,rek,r0_del6,r,tau,f_amp
-     .,  dxkf,xkf,c0_rf,dtn,rcap
+     .,  dxkf,xkf,c0_rf,dtn,rcap,dt_out
       integer ifrict,ndt
 C   Create a netCDF variable for each model parameter
       character*(*) bb_NAME, f1_NAME, xk_NAME, xl_NAME, dt_NAME
      ., rpsi_NAME, rek_NAME, r0_del6_NAME, r_NAME, tau_NAME, f_amp_NAME
      ., dxkf_NAME, xkf_NAME, c0_rf_NAME, ndt_NAME, dtn_NAME, rcap_NAME
-     ., ifrict_NAME
+     ., dt_out_NAME,ifrict_NAME
       parameter (bb_NAME='bb',f1_NAME='f1',xk_NAME='xk',xl_NAME='xl')
       parameter (dt_NAME='dt',rpsi_NAME='rpsi',rek_NAME='rek'
-     .,          r0_del6_NAME='r0_del6')
-      parameter (r_NAME='r',tau_NAME='tau',f_amp_NAME='f_amp'
-     .,          dxkf_NAME='dxkf')
-      parameter (xkf_NAME='xkf',c0_rf_NAME='c0_rf',ndt_NAME='ndt'
-     .,          dtn_NAME='dtn')
-      parameter (rcap_NAME='rcap',ifrict_NAME='ifrict')
+     .,          r0_del6_NAME='r0_del6', r_NAME='r',tau_NAME='tau'
+     .,          f_amp_NAME='f_amp',dxkf_NAME='dxkf',xkf_NAME='xkf'
+     .,          c0_rf_NAME='c0_rf',ndt_NAME='ndt' ,dtn_NAME='dtn'
+     .,          rcap_NAME='rcap',dt_out_NAME='dt_out'
+     .,          ifrict_NAME='ifrict')
       integer bb_varid, f1_varid, xk_varid, xl_varid, dt_varid
      .,       rpsi_varid
      .,       rek_varid, r0_del6_varid, r_varid, tau_varid, f_amp_varid
      .,       dxkf_varid, xkf_varid, c0_rf_varid, ndt_varid, dtn_varid
-     .,       rcap_varid, ifrict_varid
+     .,       rcap_varid, dt_out_varid, ifrict_varid
 
 C   Each variable carries a "units" attribute; all are dimensionless.
       character*(*) UNITS
@@ -961,119 +962,124 @@ C   Create the file.
       write(6,*) FILE_NAME
       retval = nf_create(FILE_NAME, nf_clobber, ncid)
       if (retval .ne. nf_noerr) call handle_err(retval)
-      write(6,*) FILE_NAME
 
 c   Define parameter variables, assign units attributes.
       write(6,*) bb_NAME 
       retval = nf_def_var(ncid, bb_NAME, NF_REAL, 0, 0, bb_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
-      write(6,*) bb_NAME 
       retval = nf_put_att_text(ncid, bb_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
-      write(6,*) bb_NAME 
       write(6,*) f1_NAME 
       retval = nf_def_var(ncid, f1_NAME, NF_REAL, 0, 0, f1_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, f1_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) xk_NAME 
       retval = nf_def_var(ncid, xk_NAME, NF_REAL, 0, 0, xk_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, xk_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) xl_NAME 
       retval = nf_def_var(ncid, xl_NAME, NF_REAL, 0, 0, xl_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, xl_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) dt_NAME 
       retval = nf_def_var(ncid, dt_NAME, NF_REAL, 0, 0, dt_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, dt_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) rpsi_NAME 
       retval = nf_def_var(ncid, rpsi_NAME, NF_REAL, 0, 0, rpsi_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, rpsi_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) rek_NAME 
       retval = nf_def_var(ncid, rek_NAME, NF_REAL, 0, 0, rek_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, rek_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) r0_del6_NAME 
       retval = nf_def_var(ncid, r0_del6_NAME, NF_REAL, 0, 0
-     ., r0_del6_varid) 
+     .,      r0_del6_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, r0_del6_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) r_NAME 
       retval = nf_def_var(ncid, r_NAME, NF_REAL, 0, 0, r_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, r_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) tau_NAME 
       retval = nf_def_var(ncid, tau_NAME, NF_REAL, 0, 0, tau_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, tau_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) f_amp_NAME 
       retval = nf_def_var(ncid, f_amp_NAME, NF_REAL, 0, 0, f_amp_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, f_amp_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) dxkf_NAME 
       retval = nf_def_var(ncid, dxkf_NAME, NF_REAL, 0, 0, dxkf_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, dxkf_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) xkf_NAME 
       retval = nf_def_var(ncid, xkf_NAME, NF_REAL, 0, 0, xkf_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, xkf_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) c0_rf_NAME 
       retval = nf_def_var(ncid, c0_rf_NAME, NF_REAL, 0, 0, c0_rf_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, c0_rf_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) ndt_NAME 
       retval = nf_def_var(ncid, ndt_NAME, NF_INT, 0, 0, ndt_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, ndt_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) dtn_NAME 
       retval = nf_def_var(ncid, dtn_NAME, NF_REAL, 0, 0, dtn_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, dtn_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) rcap_NAME 
       retval = nf_def_var(ncid, rcap_NAME, NF_REAL, 0, 0, rcap_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, rcap_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
+      if (retval .ne. nf_noerr) call handle_err(retval)
+      write(6,*) dt_out_NAME 
+      retval = nf_def_var(ncid, dt_out_NAME, NF_REAL, 0, 0
+     .,       dt_out_varid) 
+      if (retval .ne. nf_noerr) call handle_err(retval)
+      retval = nf_put_att_text(ncid, dt_out_varid, UNITS, len(UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
       write(6,*) ifrict_NAME 
-      retval = nf_def_var(ncid, ifrict_NAME, NF_INT, 0, 0, ifrict_varid) 
+      retval = nf_def_var(ncid, ifrict_NAME, NF_INT, 0, 0
+     .,       ifrict_varid) 
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_att_text(ncid, ifrict_varid, UNITS, len(UNITS_nd)
-     .,UNITS_nd)
+     .,      UNITS_nd)
       if (retval .ne. nf_noerr) call handle_err(retval)
 
 C   Define the dimensions for the spectral variables.
@@ -1182,7 +1188,10 @@ c  write parameter values
       if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_var_real(ncid, rcap_varid, rcap)
       if (retval .ne. nf_noerr) call handle_err(retval)
+      retval = nf_put_var_real(ncid, dt_out_varid, dt_out)
+      if (retval .ne. nf_noerr) call handle_err(retval)
       retval = nf_put_var_int(ncid, ifrict_varid, ifrict)
+      if (retval .ne. nf_noerr) call handle_err(retval)
 
 C   Write the coordinate variable data. This will put the latitudes
 C   and longitudes of our data grid into the netCDF file.
