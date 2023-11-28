@@ -31,3 +31,6 @@
 *.out
 *.app
 *.x
+
+#  .DS_Store
+**/.DS_Store
